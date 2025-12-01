@@ -1,6 +1,5 @@
-use std::str::FromStr;
-use itertools;
 use itertools::Itertools;
+use std::str::FromStr;
 
 advent_of_code::solution!(1);
 
@@ -10,7 +9,8 @@ pub fn part_one(input: &str) -> Option<u64> {
 }
 
 fn parse(input: &str) -> Vec<i64> {
-    input.split_whitespace()
+    input
+        .split_whitespace()
         .map(|m| {
             let (dir, dist) = m.trim().split_at(1);
             parse_dir(dir) * i64::from_str(dist).unwrap()
