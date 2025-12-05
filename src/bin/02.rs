@@ -1,5 +1,6 @@
 use itertools::Itertools;
 use std::str::FromStr;
+use advent_of_code::debug_println;
 
 advent_of_code::solution!(2);
 
@@ -58,10 +59,6 @@ fn count_more_silly(range: Range) -> i128 {
         .flat_map(|d| count_silly_generic(d, range))
         .unique()
         .sum()
-}
-
-macro_rules! debug_println {
-    ($($arg:tt)*) => (#[cfg(debug_assertions)] println!($($arg)*));
 }
 
 fn count_silly_generic(repeats: u32, range: Range) -> Vec<i128> {

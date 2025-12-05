@@ -1,13 +1,11 @@
 #![feature(ascii_char)]
 #![feature(ascii_char_variants)]
-use std::io::Write;
 extern crate core;
 
 use std::ascii;
 use std::collections::HashMap;
-use std::io::stdout;
 use std::iter::repeat;
-use advent_of_code::Map2D;
+use advent_of_code::{debug_print, debug_println, Map2D};
 
 advent_of_code::solution!(4);
 
@@ -37,19 +35,22 @@ fn accessible_paper(map: &Map2D) -> impl Iterator<Item=(usize, usize)> {
     map.range().filter(|&(r, c)| is_paper(map, r, c) && is_paper_accessible(map, r, c))
 }
 
+#[allow(unused)]
 fn show_pos(map: &Map2D, row: usize, col: usize) -> ascii::Char {
     if !is_paper(map, row, col) { SPACE }
     else if is_paper_accessible(map, row, col) { ACCESSIBLE }
     else { PAPER }
 }
 
+#[allow(unused)]
 fn print_accessible(map: &Map2D) {
     for r in 0..map.rows {
         for c in 0..map.cols {
-            print!("{}", show_pos(map, r, c))
+            debug_print!("{}", show_pos(map, r, c))
         }
-        println!()
+        debug_println!()
     }
+    debug_println!();
 }
 
 pub fn part_two(input: &str) -> Option<usize> {
@@ -64,10 +65,7 @@ fn take_accessible_paper(map: &mut Map2D) -> bool {
 
 fn take_all_accessible_paper(map: &mut Map2D) -> usize {
     while take_accessible_paper(map) {
-        let mut lock = stdout().lock();
-        writeln!(lock).expect("no error");
         print_accessible(map);
-        println!();
     }
     map.overwrite_count()
 }

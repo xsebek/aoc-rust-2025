@@ -2,13 +2,21 @@
 #![feature(ascii_char_variants)]
 
 use std::ascii;
-use std::ascii::Char::{FullStop, LineFeed};
+use std::ascii::Char::LineFeed;
 use std::collections::HashMap;
 use itertools::Itertools;
 
 pub mod template;
 
 // Use this file to add helper functions and additional modules.
+
+#[macro_export] macro_rules! debug_print {
+    ($($arg:tt)*) => (#[cfg(debug_assertions)] print!($($arg)*));
+}
+
+#[macro_export] macro_rules! debug_println {
+    ($($arg:tt)*) => (#[cfg(debug_assertions)] println!($($arg)*));
+}
 
 pub struct Map2D<'a> {
     raw: &'a [ascii::Char],
