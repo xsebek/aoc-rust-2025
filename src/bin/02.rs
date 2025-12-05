@@ -1,6 +1,6 @@
+use advent_of_code::{Range, debug_println};
 use itertools::Itertools;
 use std::str::FromStr;
-use advent_of_code::{debug_println, Range};
 
 advent_of_code::solution!(2);
 

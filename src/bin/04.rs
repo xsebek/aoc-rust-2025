@@ -2,10 +2,10 @@
 #![feature(ascii_char_variants)]
 extern crate core;
 
+use advent_of_code::{Map2D, debug_print, debug_println};
 use std::ascii;
 use std::collections::HashMap;
 use std::iter::repeat;
-use advent_of_code::{debug_print, debug_println, Map2D};
 
 advent_of_code::solution!(4);
 
@@ -24,22 +24,28 @@ fn is_paper(map: &Map2D, row: usize, col: usize) -> bool {
 }
 
 fn is_paper_accessible(map: &Map2D, row: usize, col: usize) -> bool {
-    let papers_near = map.neighbors(row, col)
+    let papers_near = map
+        .neighbors(row, col)
         .into_iter()
         .filter(|&c| c == Some(PAPER))
         .count();
     papers_near < 4
 }
 
-fn accessible_paper(map: &Map2D) -> impl Iterator<Item=(usize, usize)> {
-    map.range().filter(|&(r, c)| is_paper(map, r, c) && is_paper_accessible(map, r, c))
+fn accessible_paper(map: &Map2D) -> impl Iterator<Item = (usize, usize)> {
+    map.range()
+        .filter(|&(r, c)| is_paper(map, r, c) && is_paper_accessible(map, r, c))
 }
 
 #[allow(unused)]
 fn show_pos(map: &Map2D, row: usize, col: usize) -> ascii::Char {
-    if !is_paper(map, row, col) { SPACE }
-    else if is_paper_accessible(map, row, col) { ACCESSIBLE }
-    else { PAPER }
+    if !is_paper(map, row, col) {
+        SPACE
+    } else if is_paper_accessible(map, row, col) {
+        ACCESSIBLE
+    } else {
+        PAPER
+    }
 }
 
 #[allow(unused)]

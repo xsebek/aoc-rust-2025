@@ -1,6 +1,6 @@
-use std::str::FromStr;
+use advent_of_code::{Range, debug_println};
 use itertools::Itertools;
-use advent_of_code::{debug_println, Range};
+use std::str::FromStr;
 
 advent_of_code::solution!(5);
 
@@ -9,10 +9,12 @@ pub fn part_one(input: &str) -> Option<usize> {
     // for r in ranges.iter() {
     //     println!("{}-{}", r.first, r.last)
     // }
-    Some(numbers
-        .into_iter()
-        .filter(|&n| is_valid(&ranges, n))
-        .count())
+    Some(
+        numbers
+            .into_iter()
+            .filter(|&n| is_valid(&ranges, n))
+            .count(),
+    )
 }
 
 fn parse(input: &str) -> (Vec<Range>, Vec<i128>) {
@@ -21,33 +23,37 @@ fn parse(input: &str) -> (Vec<Range>, Vec<i128>) {
         .take_while_ref(|l| !l.is_empty())
         .map(|l| {
             let (first, last) = l.split_once('-').unwrap();
-            Range {first: i128::from_str(first).unwrap(), last: i128::from_str(last).unwrap()}
-        }).collect_vec();
+            Range {
+                first: i128::from_str(first).unwrap(),
+                last: i128::from_str(last).unwrap(),
+            }
+        })
+        .collect_vec();
     lines.next();
     let numbers = lines.flat_map(i128::from_str).collect_vec();
     (normalize_ranges(&rs), numbers)
 }
 
 fn is_valid(ranges: &[Range], number: i128) -> bool {
-    ranges.iter()
+    ranges
+        .iter()
         .take_while(|r| r.first <= number)
         .any(|r| r.contains(number))
 }
 
 pub fn part_two(input: &str) -> Option<i128> {
     let (ranges, _) = parse(input);
-    Some(ranges
-        .iter()
-        .map(|r| r.last - r.first + 1)
-        .sum())
+    Some(ranges.iter().map(|r| r.last - r.first + 1).sum())
 }
 
 fn normalize_ranges(ranges: &[Range]) -> Vec<Range> {
     let mut res: Vec<Range> = Vec::new();
     for &r in ranges.iter().sorted() {
-        if let Some(prev) = res.last_mut() && r.first <= prev.last {
+        if let Some(prev) = res.last_mut()
+            && r.first <= prev.last
+        {
             if r.last <= prev.last {
-                continue
+                continue;
             }
             prev.last = r.last;
         } else {
