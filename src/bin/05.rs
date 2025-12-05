@@ -1,4 +1,4 @@
-use advent_of_code::{Range, debug_println};
+use advent_of_code::Range;
 use itertools::Itertools;
 use std::str::FromStr;
 
