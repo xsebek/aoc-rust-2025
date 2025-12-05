@@ -18,6 +18,18 @@ pub mod template;
     ($($arg:tt)*) => (#[cfg(debug_assertions)] println!($($arg)*));
 }
 
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub struct Range {
+    pub first: i128,
+    pub last: i128,
+}
+
+impl Range {
+    pub fn contains(self, value: i128) -> bool {
+        self.first <= value && value <= self.last
+    }
+}
+
 pub struct Map2D<'a> {
     raw: &'a [ascii::Char],
     pub cols: usize,

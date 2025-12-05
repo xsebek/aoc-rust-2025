@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use std::str::FromStr;
-use advent_of_code::debug_println;
+use advent_of_code::{debug_println, Range};
 
 advent_of_code::solution!(2);
 
@@ -21,18 +21,6 @@ fn parse(input: &str) -> Vec<Range> {
             }
         })
         .collect_vec()
-}
-
-#[derive(Debug, Copy, Clone)]
-struct Range {
-    first: i128,
-    last: i128,
-}
-
-impl Range {
-    fn contains(self, value: i128) -> bool {
-        self.first <= value && value <= self.last
-    }
 }
 
 fn count_silly(range: Range) -> i128 {
