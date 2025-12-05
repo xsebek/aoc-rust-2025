@@ -11,7 +11,7 @@ jobs:
         name: Continuous Integration
         steps:
             - uses: actions/checkout@v4
-            - run: rustup update nightly && rustup default nightly && rustup component add clippy --toolchain=nightly
+            - run: rustup update nightly && rustup default nightly && rustup component add clippy rustfmt
             - name: Set up cargo cache
               uses: actions/cache@v4
               continue-on-error: false
