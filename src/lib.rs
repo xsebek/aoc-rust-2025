@@ -76,25 +76,49 @@ impl Map2D<'_> {
             .copied()
     }
 
-    pub fn neighbors(&self, row: usize, col: usize) -> [Option<ascii::Char>; 8] {
-        Itertools::collect_array(
-            (-1..=1)
-                .cartesian_product(-1..=1)
-                .filter(|&r| r != (0, 0))
-                .map(|(r, c)| self.get_i(row as isize + r, col as isize + c)),
-        )
-        .expect("8 neighbors")
+    /// # Safety
+    /// This expects valid position inside map
+    pub unsafe fn unsafe_get(&self, row: usize, col: usize) -> ascii::Char {
+        self.overwrite.get(&(row, col))
+            .copied()
+            .unwrap_or(unsafe { *self.raw.get_unchecked(row * (self.cols + 1) + col) })
+    }
+
+    /// Returns valid neighbor positions
+    pub fn neighbor_pos(&self, row: usize, col: usize) -> impl Iterator<Item=(usize, usize)> {
+        (-1..=1)
+            .cartesian_product(-1..=1)
+            .filter(|&r| r != (0, 0))
+            .flat_map(move |(r, c)|
+                Some((add_ui(row, r, self.rows)?, add_ui(col, c, self.cols)?))
+            )
+    }
+
+    pub fn neighbors(&self, row: usize, col: usize) -> impl Iterator<Item=ascii::Char> {
+        self.neighbor_pos(row, col)
+            .map(|(r, c)| unsafe { self.unsafe_get(r, c) })
     }
 
     pub fn set(&mut self, row: usize, col: usize, value: ascii::Char) {
         self.overwrite.insert((row, col), value);
     }
 
-    pub fn set_many(&mut self, values: HashMap<(usize, usize), ascii::Char>) {
+    pub fn set_many(&mut self, values: &HashMap<(usize, usize), ascii::Char>) {
         self.overwrite.extend(values)
     }
 
     pub fn overwrite_count(&self) -> usize {
         self.overwrite.len()
+    }
+}
+
+// helper for adding in map
+fn add_ui(u: usize, i: isize, lim: usize) -> Option<usize> {
+    if i < 0 {
+        u.checked_sub((-i) as usize)
+    } else if u + (i as usize) >= lim {
+        None
+    } else {
+        Some(u + (i as usize))
     }
 }

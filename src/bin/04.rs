@@ -4,7 +4,7 @@ extern crate core;
 
 use advent_of_code::{Map2D, debug_print, debug_println};
 use std::ascii;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::iter::repeat;
 
 advent_of_code::solution!(4);
@@ -26,8 +26,8 @@ fn is_paper(map: &Map2D, row: usize, col: usize) -> bool {
 fn is_paper_accessible(map: &Map2D, row: usize, col: usize) -> bool {
     let papers_near = map
         .neighbors(row, col)
-        .into_iter()
-        .filter(|&c| c == Some(PAPER))
+        .filter(|&c| c == PAPER)
+        .take(4)
         .count();
     papers_near < 4
 }
@@ -63,15 +63,36 @@ pub fn part_two(input: &str) -> Option<usize> {
     Some(take_all_accessible_paper(&mut Map2D::new(input)))
 }
 
-fn take_accessible_paper(map: &mut Map2D) -> bool {
-    let count_before = map.overwrite_count();
-    map.set_many(HashMap::from_iter(accessible_paper(map).zip(repeat(SPACE))));
-    count_before != map.overwrite_count()
+fn take_accessible_paper(map: &mut Map2D) -> HashSet<(usize, usize)> {
+    let accessible = HashMap::from_iter(accessible_paper(map).zip(repeat(SPACE)));
+    map.set_many(&accessible);
+    accessible.into_iter()
+        .flat_map(|((r,c), _)| map.neighbor_pos(r,c))
+        .collect()
+}
+
+// TODO: use paper BTreeSet and iteratively filter/map/intersect/union
+
+fn accessible_paper2(map: &Map2D, indices: HashSet<(usize, usize)>) -> impl Iterator<Item = (usize, usize)> {
+    indices.into_iter()
+        .filter(|&(r, c)| is_paper(map, r, c) && is_paper_accessible(map, r, c))
+}
+
+fn take_accessible_paper_search_set(map: &mut Map2D, indices: HashSet<(usize, usize)>) -> HashSet<(usize, usize)> {
+    let accessible = HashMap::from_iter(accessible_paper2(map, indices).zip(repeat(SPACE)));
+    map.set_many(&accessible);
+    accessible.into_iter()
+        .flat_map(|((r,c), _)| map.neighbor_pos(r,c))
+        .collect()
 }
 
 fn take_all_accessible_paper(map: &mut Map2D) -> usize {
-    while take_accessible_paper(map) {
-        print_accessible(map);
+    let mut indices = take_accessible_paper(map);
+    while !indices.is_empty() {
+        indices = take_accessible_paper_search_set(map, indices);
+        //println!("{}", indices.len());
+        // print_accessible(map);
+        // sleep(Duration::from_secs(1))
     }
     map.overwrite_count()
 }
