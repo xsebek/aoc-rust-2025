@@ -43,7 +43,7 @@ fn parse_op(input: &str) -> IResult<&str, Op> {
 enum Op { Mul, Add }
 
 pub fn part_two(input: &str) -> Option<u128> {
-    println!("{}", transpose(input));
+    //println!("{}", transpose(input));
     Some(parse2(&transpose(input))
         .into_iter()
         .map(|(ns, o)| match o {
