@@ -54,7 +54,7 @@ impl Day {
     pub fn today() -> Option<Self> {
         let offset = FixedOffset::east_opt(SERVER_UTC_OFFSET * 3600)?;
         let today = Utc::now().with_timezone(&offset);
-        if today.month() == day_count!() as u32 && today.day() <= day_count!() as u32 {
+        if today.month() == 12 && today.day() <= day_count!() as u32 {
             Self::new(u8::try_from(today.day()).ok()?)
         } else {
             None
