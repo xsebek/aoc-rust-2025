@@ -66,23 +66,32 @@ pub fn part_two(input: &str) -> Option<usize> {
 fn take_accessible_paper(map: &mut Map2D) -> HashSet<(usize, usize)> {
     let accessible = HashMap::from_iter(accessible_paper(map).zip(repeat(SPACE)));
     map.set_many(&accessible);
-    accessible.into_iter()
-        .flat_map(|((r,c), _)| map.neighbor_pos(r,c))
+    accessible
+        .into_iter()
+        .flat_map(|((r, c), _)| map.neighbor_pos(r, c))
         .collect()
 }
 
 // TODO: use paper BTreeSet and iteratively filter/map/intersect/union
 
-fn accessible_paper2(map: &Map2D, indices: HashSet<(usize, usize)>) -> impl Iterator<Item = (usize, usize)> {
-    indices.into_iter()
+fn accessible_paper2(
+    map: &Map2D,
+    indices: HashSet<(usize, usize)>,
+) -> impl Iterator<Item = (usize, usize)> {
+    indices
+        .into_iter()
         .filter(|&(r, c)| is_paper(map, r, c) && is_paper_accessible(map, r, c))
 }
 
-fn take_accessible_paper_search_set(map: &mut Map2D, indices: HashSet<(usize, usize)>) -> HashSet<(usize, usize)> {
+fn take_accessible_paper_search_set(
+    map: &mut Map2D,
+    indices: HashSet<(usize, usize)>,
+) -> HashSet<(usize, usize)> {
     let accessible = HashMap::from_iter(accessible_paper2(map, indices).zip(repeat(SPACE)));
     map.set_many(&accessible);
-    accessible.into_iter()
-        .flat_map(|((r,c), _)| map.neighbor_pos(r,c))
+    accessible
+        .into_iter()
+        .flat_map(|((r, c), _)| map.neighbor_pos(r, c))
         .collect()
 }
 

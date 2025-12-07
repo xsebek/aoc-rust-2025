@@ -79,22 +79,21 @@ impl Map2D<'_> {
     /// # Safety
     /// This expects valid position inside map
     pub unsafe fn unsafe_get(&self, row: usize, col: usize) -> ascii::Char {
-        self.overwrite.get(&(row, col))
+        self.overwrite
+            .get(&(row, col))
             .copied()
             .unwrap_or(unsafe { *self.raw.get_unchecked(row * (self.cols + 1) + col) })
     }
 
     /// Returns valid neighbor positions
-    pub fn neighbor_pos(&self, row: usize, col: usize) -> impl Iterator<Item=(usize, usize)> {
+    pub fn neighbor_pos(&self, row: usize, col: usize) -> impl Iterator<Item = (usize, usize)> {
         (-1..=1)
             .cartesian_product(-1..=1)
             .filter(|&r| r != (0, 0))
-            .flat_map(move |(r, c)|
-                Some((add_ui(row, r, self.rows)?, add_ui(col, c, self.cols)?))
-            )
+            .flat_map(move |(r, c)| Some((add_ui(row, r, self.rows)?, add_ui(col, c, self.cols)?)))
     }
 
-    pub fn neighbors(&self, row: usize, col: usize) -> impl Iterator<Item=ascii::Char> {
+    pub fn neighbors(&self, row: usize, col: usize) -> impl Iterator<Item = ascii::Char> {
         self.neighbor_pos(row, col)
             .map(|(r, c)| unsafe { self.unsafe_get(r, c) })
     }

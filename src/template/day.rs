@@ -28,7 +28,7 @@ macro_rules! day_count {
             true => 25u8,
             false => 12u8,
         }
-    }
+    };
 }
 
 impl Day {
@@ -99,7 +99,10 @@ impl Error for DayFromStrError {}
 
 impl Display for DayFromStrError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("expecting a day number between 1 and {}", day_count!()))
+        f.write_str(&format!(
+            "expecting a day number between 1 and {}",
+            day_count!()
+        ))
     }
 }
 
@@ -144,8 +147,9 @@ impl Iterator for AllDays {
 macro_rules! day {
     ($day:expr) => {
         const {
-            $crate::template::Day::new($day)
-                .expect("invalid day number, expecting a value between 1 and 12 (or 25 before 2025)")
+            $crate::template::Day::new($day).expect(
+                "invalid day number, expecting a value between 1 and 12 (or 25 before 2025)",
+            )
         }
     };
 }
