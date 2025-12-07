@@ -99,18 +99,18 @@ impl Error for DayFromStrError {}
 
 impl Display for DayFromStrError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("expecting a day number between 1 and 12")
+        f.write_str(&format!("expecting a day number between 1 and {}", day_count!()))
     }
 }
 
 /* -------------------------------------------------------------------------- */
 
-/// An iterator that yields every day of advent from the 1st to the 12th.
+/// An iterator that yields every day of advent from the 1st to the 12th (or 25th before 2025).
 pub fn all_days() -> AllDays {
     AllDays::new()
 }
 
-/// An iterator that yields every day of advent from the 1st to the 12th.
+/// An iterator that yields every day of advent from the 1st to the 12th (or 25th before 2025).
 pub struct AllDays {
     current: u8,
 }
@@ -129,7 +129,7 @@ impl Iterator for AllDays {
         if self.current > day_count!() {
             return None;
         }
-        // NOTE: the iterator starts at 1 and we have verified that the value is not above 12.
+        // NOTE: the iterator starts at 1, and we have verified that the value is not above 12 (or 25).
         let day = Day(self.current);
         self.current += 1;
 
@@ -145,7 +145,7 @@ macro_rules! day {
     ($day:expr) => {
         const {
             $crate::template::Day::new($day)
-                .expect("invalid day number, expecting a value between 1 and 12")
+                .expect(&format!("invalid day number, expecting a value between 1 and {}", day_count!()))
         }
     };
 }
