@@ -7,7 +7,7 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use std::string::String;
 
-use advent_of_code::{debug_println, Map2D};
+use advent_of_code::{Map2D, debug_println};
 
 advent_of_code::solution!(7);
 
@@ -38,11 +38,11 @@ fn split_beams(map: &Map2D, level: usize, prev: Beams) -> (usize, Beams) {
         .partition(|&(b, _)| map.get(level, b as usize) == Some(SPLIT));
     let splits = split
         .iter()
-        .flat_map(|(&b, &count)| [(b-1, count), (b+1, count)]);
+        .flat_map(|(&b, &count)| [(b - 1, count), (b + 1, count)]);
     (split.len(), union_counts(keep, splits))
 }
 
-fn union_counts(left: Beams, right: impl Iterator<Item=(BeamPos, usize)>) -> Beams {
+fn union_counts(left: Beams, right: impl Iterator<Item = (BeamPos, usize)>) -> Beams {
     let mut result = left;
     for (b, count) in right {
         let current_count = result.get(&b).copied().unwrap_or(0);
@@ -66,16 +66,19 @@ fn trace_beams(map: &Map2D) -> (usize, Beams) {
 
 #[allow(unused)]
 fn print_level(map: &Map2D, level: usize, beams: &Beams) {
-    debug_println!("{}", (0..map.cols)
-        .map(|col| {
-            let c = map.get(level, col).unwrap();
-            if c == SPACE && beams.contains_key(&(col as BeamPos)) {
-                BEAM
-            } else {
-                c
-            }
-        })
-        .collect::<String>())
+    debug_println!(
+        "{}",
+        (0..map.cols)
+            .map(|col| {
+                let c = map.get(level, col).unwrap();
+                if c == SPACE && beams.contains_key(&(col as BeamPos)) {
+                    BEAM
+                } else {
+                    c
+                }
+            })
+            .collect::<String>()
+    )
 }
 
 pub fn part_two(input: &str) -> Option<usize> {
