@@ -145,7 +145,7 @@ macro_rules! day {
     ($day:expr) => {
         const {
             $crate::template::Day::new($day)
-                .expect(&format!("invalid day number, expecting a value between 1 and {}", day_count!()))
+                .expect("invalid day number, expecting a value between 1 and 12 (or 25 before 2025)")
         }
     };
 }
