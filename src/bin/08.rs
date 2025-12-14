@@ -40,15 +40,16 @@ fn dist(a: Point, b: Point) -> Dist {
         + (a.2 - b.2).pow(2)
 }
 
-fn closest(points: &[Point]) -> Vec<(usize, Dist)> {
+/* CLOSEST VERSION
+fn max_closest(points: &[Point]) -> Vec<(usize, Dist)> {
     points
         .iter()
         .enumerate()
-        .map(|(i, &p)| closest_point(i, p, points))
+        .map(|(i, &p)| max_closest_point(i, p, points))
         .collect_vec()
 }
 
-fn closest_point(index: usize, point: Point, points: &[Point]) -> (usize, Dist) {
+fn max_closest_point(index: usize, point: Point, points: &[Point]) -> (usize, Dist) {
     points.iter()
         .map(|&p| dist(point, p))
         .enumerate()
@@ -57,29 +58,34 @@ fn closest_point(index: usize, point: Point, points: &[Point]) -> (usize, Dist) 
         .expect("Expected nonempty points")
 }
 
-fn closest_pairs(points: &[Point]) -> impl Iterator<Item=(usize, usize)> {
-    closest(points).into_iter()
+fn max_closest_pairs(points: &[Point]) -> impl Iterator<Item=(usize, usize)> {
+    max_closest(points).into_iter()
         .enumerate()
         .sorted_by_key(|p| p.1.1)
         .map(|(from, (to, _))| (from, to))
+}
+ */
+
+fn sorted_pairs(start: usize, end: usize) -> impl Iterator<Item=(usize, usize)> {
+    (start..end-1).flat_map(move |l| (l+1..end).map(move |r| (l,r)))
+}
+
+fn k_closest_pairs(k: usize, points: &[Point]) -> impl Iterator<Item=(usize, usize)> {
+    sorted_pairs(0, points.len())
+        .k_smallest_by_key(k, |&(l, r)| dist(points[l], points[r]))
 }
 
 fn connect_closest(iterations: usize, points: &[Point]) -> Circuits {
     let mut result = vec![None; points.len()];
     let mut ix = 1;
-    let mut n = 0;
-    for (from, to) in closest_pairs(points) {
-        debug_print!("Connecting {:?} to {:?} - ", points[from], points[to]);
-        let already_connected = connect_circuits(&mut result, &mut ix, from, to);
-        n += usize::from(!already_connected);
-        if n >= iterations {
-            break
-        }
+    for (from, to) in k_closest_pairs(iterations, points) {
+        debug_print!("Connecting {:?}\tto {:?}\t(dist {}) - ", points[from], points[to], dist(points[from], points[to]).isqrt());
+        connect_circuits(&mut result, &mut ix, from, to);
     }
     result
 }
 
-fn connect_circuits(circuits: &mut [Option<u32>], ix: &mut u32, from: usize, to: usize) -> bool {
+fn connect_circuits(circuits: &mut [Option<u32>], ix: &mut u32, from: usize, to: usize) {
     match (circuits[from], circuits[to]) {
         (None, None) => {
             debug_println!("new circuit {ix}");
@@ -87,13 +93,13 @@ fn connect_circuits(circuits: &mut [Option<u32>], ix: &mut u32, from: usize, to:
             circuits[to] =  Some(*ix);
             *ix += 1
         }
-        (Some(c_from), Some(c_to)) => if c_from == c_to {
-            debug_println!("already connected");
-            return true
-        } else {
-            debug_println!("connecting circuit {c_from} to {c_to}");
-            connect_two_circuits(circuits, c_from, c_to)
-        },
+        (Some(c_from), Some(c_to)) =>
+            if c_from != c_to {
+                debug_println!("connecting circuit {c_from} to {c_to}");
+                connect_two_circuits(circuits, c_from, c_to)
+            } else {
+                debug_println!("already connected in {c_from}");
+            },
         (Some(c_from), None) => {
             debug_println!("connecting from {c_from}");
             circuits[to] = Some(c_from);
@@ -103,7 +109,6 @@ fn connect_circuits(circuits: &mut [Option<u32>], ix: &mut u32, from: usize, to:
             circuits[from] = Some(c_to)
         }
     }
-    false
 }
 
 fn connect_two_circuits(circuits: &mut [Option<u32>], c_from: u32, c_to: u32) {
@@ -124,23 +129,6 @@ pub fn part_two(_: &str) -> Option<u64> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_part_one_helpers() {
-        let points = parse(&advent_of_code::template::read_file("examples", DAY));
-        let closest_points = closest(&points);
-        let last = points.len()-1;
-
-        let d0 = dist((162,817,812), (425,690,689));
-        let d1 = dist((162,817,812), (431,825,988));
-        let d2 = dist((906,360,560), (805,96,715));
-        let d3 = dist((431,825,988), (425,690,689));
-        let d4 = dist((162,817,812), (431,825,988));
-
-        assert_eq!(closest_points.len(), points.len());
-        assert_eq!(closest_points[0].0, last);
-        assert_eq!(closest_points[last].0, 0);
-    }
 
     #[test]
     fn test_part_one() {
