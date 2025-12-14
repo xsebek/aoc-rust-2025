@@ -4,7 +4,7 @@ use nom::bytes::complete::tag;
 use nom::character::complete::newline;
 use nom::multi::many1;
 use nom::sequence::{preceded, terminated};
-use advent_of_code::{debug_print, debug_println};
+use advent_of_code::{debug_print, debug_println, sorted_pairs};
 
 advent_of_code::solution!(8);
 
@@ -38,10 +38,6 @@ fn dist(a: Point, b: Point) -> Dist {
     (a.0 - b.0).pow(2)
         + (a.1 - b.1).pow(2)
         + (a.2 - b.2).pow(2)
-}
-
-fn sorted_pairs(start: usize, end: usize) -> impl Iterator<Item=(usize, usize)> {
-    (start..end-1).flat_map(move |l| (l+1..end).map(move |r| (l,r)))
 }
 
 fn k_closest_pairs(k: usize, points: &[Point]) -> impl Iterator<Item=(usize, usize)> {
