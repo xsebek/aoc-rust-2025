@@ -1,10 +1,10 @@
+use advent_of_code::{debug_print, debug_println, sorted_pairs};
 use itertools::Itertools;
-use nom::{IResult, Parser};
 use nom::bytes::complete::tag;
 use nom::character::complete::newline;
 use nom::multi::many1;
 use nom::sequence::{preceded, terminated};
-use advent_of_code::{debug_print, debug_println, sorted_pairs};
+use nom::{IResult, Parser};
 
 advent_of_code::solution!(8);
 
@@ -35,21 +35,23 @@ fn parse_point(input: &str) -> IResult<&str, Point> {
 }
 
 fn dist(a: Point, b: Point) -> Dist {
-    (a.0 - b.0).pow(2)
-        + (a.1 - b.1).pow(2)
-        + (a.2 - b.2).pow(2)
+    (a.0 - b.0).pow(2) + (a.1 - b.1).pow(2) + (a.2 - b.2).pow(2)
 }
 
-fn k_closest_pairs(k: usize, points: &[Point]) -> impl Iterator<Item=(usize, usize)> {
-    sorted_pairs(0, points.len())
-        .k_smallest_by_key(k, |&(l, r)| dist(points[l], points[r]))
+fn k_closest_pairs(k: usize, points: &[Point]) -> impl Iterator<Item = (usize, usize)> {
+    sorted_pairs(0, points.len()).k_smallest_by_key(k, |&(l, r)| dist(points[l], points[r]))
 }
 
 fn connect_closest(iterations: usize, points: &[Point]) -> Circuits {
     let mut result = vec![None; points.len()];
     let mut ix = 1;
     for (from, to) in k_closest_pairs(iterations, points) {
-        debug_print!("Connecting {:?}\tto {:?}\t(dist {}) - ", points[from], points[to], dist(points[from], points[to]).isqrt());
+        debug_print!(
+            "Connecting {:?}\tto {:?}\t(dist {}) - ",
+            points[from],
+            points[to],
+            dist(points[from], points[to]).isqrt()
+        );
         connect_circuits(&mut result, &mut ix, from, to);
     }
     result
@@ -60,16 +62,17 @@ fn connect_circuits(circuits: &mut [Option<u32>], ix: &mut u32, from: usize, to:
         (None, None) => {
             debug_println!("new circuit {ix}");
             circuits[from] = Some(*ix);
-            circuits[to] =  Some(*ix);
+            circuits[to] = Some(*ix);
             *ix += 1
         }
-        (Some(c_from), Some(c_to)) =>
+        (Some(c_from), Some(c_to)) => {
             if c_from != c_to {
                 debug_println!("connecting circuit {c_from} to {c_to}");
                 connect_two_circuits(circuits, c_from, c_to)
             } else {
                 debug_println!("already connected in {c_from}");
-            },
+            }
+        }
         (Some(c_from), None) => {
             debug_println!("connecting from {c_from}");
             circuits[to] = Some(c_from);
@@ -97,19 +100,23 @@ pub fn part_two(input: &str) -> Option<i64> {
     connect_all(&points)
 }
 
-fn closest_pairs(points: &[Point]) -> impl Iterator<Item=(usize, usize)> {
-    sorted_pairs(0, points.len())
-        .sorted_by_key(|&(l, r)| dist(points[l], points[r]))
+fn closest_pairs(points: &[Point]) -> impl Iterator<Item = (usize, usize)> {
+    sorted_pairs(0, points.len()).sorted_by_key(|&(l, r)| dist(points[l], points[r]))
 }
 
 fn connect_all(points: &[Point]) -> Option<i64> {
     let mut result = vec![None; points.len()];
     let mut ix = 1;
     for (from, to) in closest_pairs(points) {
-        debug_print!("Connecting {:?}\tto {:?}\t(dist {}) - ", points[from], points[to], dist(points[from], points[to]).isqrt());
+        debug_print!(
+            "Connecting {:?}\tto {:?}\t(dist {}) - ",
+            points[from],
+            points[to],
+            dist(points[from], points[to]).isqrt()
+        );
         connect_circuits(&mut result, &mut ix, from, to);
         if result.iter().all(|c| c.is_some()) {
-            return Some(distance_from_wall(points, from, to))
+            return Some(distance_from_wall(points, from, to));
         }
     }
     None

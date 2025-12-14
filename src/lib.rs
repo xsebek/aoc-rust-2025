@@ -21,8 +21,8 @@ macro_rules! debug_println {
 }
 
 // All pairs (x,y) where x < y and x,y are in range [start, end). This is useful for brute-force.
-pub fn sorted_pairs(start: usize, end: usize) -> impl Iterator<Item=(usize, usize)> {
-    (start..end-1).flat_map(move |l| (l+1..end).map(move |r| (l,r)))
+pub fn sorted_pairs(start: usize, end: usize) -> impl Iterator<Item = (usize, usize)> {
+    (start..end - 1).flat_map(move |l| (l + 1..end).map(move |r| (l, r)))
 }
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]

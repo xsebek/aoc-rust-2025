@@ -1,13 +1,13 @@
-use std::cmp::max;
-use std::iter::once;
-use nom::bytes::complete::tag;
-use nom::character::complete::newline;
-use nom::{IResult, Parser};
-use nom::multi::many1;
-use nom::sequence::{preceded, terminated};
 use advent_of_code::{debug_println, sorted_pairs};
 #[allow(unused_imports)]
 use itertools::Itertools;
+use nom::bytes::complete::tag;
+use nom::character::complete::newline;
+use nom::multi::many1;
+use nom::sequence::{preceded, terminated};
+use nom::{IResult, Parser};
+use std::cmp::max;
+use std::iter::once;
 
 advent_of_code::solution!(9);
 
@@ -46,7 +46,9 @@ pub fn part_two(input: &str) -> Option<u64> {
     // top half circle
     let p1: Point = (94693, 50233);
     let top_y = 69349;
-    let largest_above = points.iter().copied()
+    let largest_above = points
+        .iter()
+        .copied()
         .filter(|r| p1.1 < r.1 && r.1 < top_y)
         .map(|r| area(p1, r))
         .max()
@@ -54,7 +56,9 @@ pub fn part_two(input: &str) -> Option<u64> {
     // bottom half circle
     let p2: Point = (94693, 48547);
     let bottom_y = 3238;
-    let largest_below = points.iter().copied()
+    let largest_below = points
+        .iter()
+        .copied()
         .filter(|r| p2.1 > r.1 && r.1 > bottom_y)
         .map(|r| area(p1, r))
         .max()
@@ -65,20 +69,26 @@ pub fn part_two(input: &str) -> Option<u64> {
 #[allow(unused)]
 fn print_dot_graph(points: &[Point]) {
     for p in points.iter() {
-        debug_println!("P_{}_{} [pos=\"{},{}!\"]", p.0, p.1, p.0/100, p.1/100)
+        debug_println!("P_{}_{} [pos=\"{},{}!\"]", p.0, p.1, p.0 / 100, p.1 / 100)
     }
-    for (&l, &r) in points.iter().zip(points.iter().skip(1).chain(once(&points[0]))) {
+    for (&l, &r) in points
+        .iter()
+        .zip(points.iter().skip(1).chain(once(&points[0])))
+    {
         debug_println!("P_{}_{} -- P_{}_{}", l.0, l.1, r.0, r.1)
     }
 }
 
 #[allow(unused)]
 fn print_candidates_above(points: &[Point]) {
-    #[cfg(debug_assertions)] {
+    #[cfg(debug_assertions)]
+    {
         debug_println!("CANDIDATES ABOVE:");
         let p: Point = (94693, 50233);
         let top_y = 69349;
-        let largest_above = points.iter().copied()
+        let largest_above = points
+            .iter()
+            .copied()
             .filter(|r| p.1 < r.1 && r.1 < top_y)
             .k_largest_by_key(10, |r| area(p, *r));
         for r in largest_above {
@@ -89,11 +99,14 @@ fn print_candidates_above(points: &[Point]) {
 
 #[allow(unused)]
 fn print_candidates_below(points: &[Point]) {
-    #[cfg(debug_assertions)] {
+    #[cfg(debug_assertions)]
+    {
         debug_println!("CANDIDATES BELOW:");
-        let p: Point = (94693,48547);
+        let p: Point = (94693, 48547);
         let bottom_y = 3238;
-        let largest_above = points.iter().copied()
+        let largest_above = points
+            .iter()
+            .copied()
             .filter(|r| p.1 > r.1 && r.1 > bottom_y)
             .k_largest_by_key(10, |r| area(p, *r));
         for r in largest_above {
