@@ -40,32 +40,6 @@ fn dist(a: Point, b: Point) -> Dist {
         + (a.2 - b.2).pow(2)
 }
 
-/* CLOSEST VERSION
-fn max_closest(points: &[Point]) -> Vec<(usize, Dist)> {
-    points
-        .iter()
-        .enumerate()
-        .map(|(i, &p)| max_closest_point(i, p, points))
-        .collect_vec()
-}
-
-fn max_closest_point(index: usize, point: Point, points: &[Point]) -> (usize, Dist) {
-    points.iter()
-        .map(|&p| dist(point, p))
-        .enumerate()
-        .filter(|&(i, _)| i != index)
-        .min_by(|p1, p2| p1.1.cmp(&p2.1))
-        .expect("Expected nonempty points")
-}
-
-fn max_closest_pairs(points: &[Point]) -> impl Iterator<Item=(usize, usize)> {
-    max_closest(points).into_iter()
-        .enumerate()
-        .sorted_by_key(|p| p.1.1)
-        .map(|(from, (to, _))| (from, to))
-}
- */
-
 fn sorted_pairs(start: usize, end: usize) -> impl Iterator<Item=(usize, usize)> {
     (start..end-1).flat_map(move |l| (l+1..end).map(move |r| (l,r)))
 }
@@ -122,8 +96,33 @@ fn n_largest_circuits_product(n: usize, circuits: Circuits) -> usize {
     circuit_sizes.values().sorted().rev().take(n).product()
 }
 
-pub fn part_two(_: &str) -> Option<u64> {
+pub fn part_two(input: &str) -> Option<i64> {
+    let points = parse(input);
+    connect_all(&points)
+}
+
+fn closest_pairs(points: &[Point]) -> impl Iterator<Item=(usize, usize)> {
+    sorted_pairs(0, points.len())
+        .sorted_by_key(|&(l, r)| dist(points[l], points[r]))
+}
+
+fn connect_all(points: &[Point]) -> Option<i64> {
+    let mut result = vec![None; points.len()];
+    let mut ix = 1;
+    for (from, to) in closest_pairs(points) {
+        debug_print!("Connecting {:?}\tto {:?}\t(dist {}) - ", points[from], points[to], dist(points[from], points[to]).isqrt());
+        connect_circuits(&mut result, &mut ix, from, to);
+        if result.iter().all(|c| c.is_some()) {
+            return Some(distance_from_wall(points, from, to))
+        }
+    }
     None
+}
+
+fn distance_from_wall(points: &[Point], from: usize, to: usize) -> i64 {
+    let (x1, _, _) = points[from];
+    let (x2, _, _) = points[to];
+    x1 * x2
 }
 
 #[cfg(test)]
@@ -132,13 +131,15 @@ mod tests {
 
     #[test]
     fn test_part_one() {
+        debug_println!("TEST PART ONE");
         let result = part_one_iter(10, &advent_of_code::template::read_file("examples", DAY));
         assert_eq!(result, Some(40));
     }
 
     #[test]
     fn test_part_two() {
+        debug_println!("TEST PART TWO");
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(216 * 117));
     }
 }
