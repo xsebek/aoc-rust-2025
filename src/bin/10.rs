@@ -7,7 +7,8 @@ use nom::branch::alt;
 use nom::multi::{fold_many1, many1, separated_list1};
 use nom::sequence::{delimited, preceded, terminated};
 use z3::ast::Int;
-use z3::Solver;
+use z3::{Optimize, SatResult};
+use advent_of_code::debug_println;
 
 advent_of_code::solution!(10);
 
@@ -93,30 +94,35 @@ pub fn part_two(input: &str) -> Option<u64> {
 }
 
 fn solve_joltages(machine: &Machine) -> u64 {
-    let solver = Solver::new();
+    let optimizer = Optimize::new();
     let buttons = machine.buttons.iter().map(|_| Int::fresh_const("b")).collect_vec();
     for button in buttons.iter() {
-        solver.assert(button.ge(0));
+        optimizer.assert(&button.ge(0));
     }
     for (j, required_jolts) in machine.joltage.iter().copied().enumerate() {
-        let mut sum = Int::from(0);
-        for (button_presses, button_jolts) in buttons.iter().zip(machine.buttons.iter()) {
-            if button_jolts.contains(&j) {
-                sum += button_presses;
-            }
-        }
-        solver.assert(sum.eq(required_jolts))
+        let sum = buttons.iter()
+            .zip(machine.buttons.iter())
+            .filter(|(_button_presses, button_jolts)| button_jolts.contains(&j))
+            .map(|(button_presses, _button_jolts)| button_presses)
+            .sum::<Int>();
+        optimizer.assert(&sum.eq(required_jolts))
     }
-    println!();
-    println!("Machine: {:?} {:?}", machine.buttons, machine.joltage);
-    solver.solutions(buttons, false)
-        .map(|solution| {
-            let presses: u64 = solution.iter().map(Int::as_u64).map(|p| p.unwrap_or(0)).sum();
-            println!("Solution: {presses} {solution:?}");
-            presses
-        })//.take(1000)
-        .min()
-        .expect("Machine joltage should be solvable")
+    optimizer.minimize(&buttons.iter().sum::<Int>());
+
+    debug_println!();
+    debug_println!("Machine: {:?} {:?}", machine.buttons, machine.joltage);
+    match optimizer.check(&[]) {
+        SatResult::Sat => {
+            let model = optimizer.get_model();
+            model.map(|m| {
+                let solution = buttons.iter().map(|b| m.get_const_interp(b)).collect_vec();
+                let presses: u64 = solution.iter().map(|b| b.as_ref().and_then(Int::as_u64).unwrap_or(0)).sum();
+                debug_println!("Solution: {presses:?} {solution:?}");
+                presses
+            })
+        },
+        _ => None,
+    }.expect("Machine joltage should be solvable")
 }
 
 #[cfg(test)]
