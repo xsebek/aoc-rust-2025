@@ -6,6 +6,8 @@ use nom::{IResult, Parser};
 use nom::branch::alt;
 use nom::multi::{fold_many1, many1, separated_list1};
 use nom::sequence::{delimited, preceded, terminated};
+use z3::ast::Int;
+use z3::Solver;
 
 advent_of_code::solution!(10);
 
@@ -25,7 +27,6 @@ pub fn part_one(input: &str) -> Option<usize> {
 struct Machine {
     lights: u32,
     buttons: Vec<Vec<usize>>,
-    #[allow(unused)]
     joltage: Vec<u32>,
 }
 
@@ -86,8 +87,36 @@ fn button_presses(buttons: &[u32]) -> impl Iterator<Item=HashSet<u32>> {
     iterate(HashSet::from([0]), |l| press_buttons(buttons, l))
 }
 
-pub fn part_two(_input: &str) -> Option<u64> {
-    None
+pub fn part_two(input: &str) -> Option<u64> {
+    let machines = parse(input);
+    Some(machines.iter().map(solve_joltages).sum())
+}
+
+fn solve_joltages(machine: &Machine) -> u64 {
+    let solver = Solver::new();
+    let buttons = machine.buttons.iter().map(|_| Int::fresh_const("b")).collect_vec();
+    for button in buttons.iter() {
+        solver.assert(button.ge(0));
+    }
+    for (j, required_jolts) in machine.joltage.iter().copied().enumerate() {
+        let mut sum = Int::from(0);
+        for (button_presses, button_jolts) in buttons.iter().zip(machine.buttons.iter()) {
+            if button_jolts.contains(&j) {
+                sum += button_presses;
+            }
+        }
+        solver.assert(sum.eq(required_jolts))
+    }
+    println!();
+    println!("Machine: {:?} {:?}", machine.buttons, machine.joltage);
+    solver.solutions(buttons, false)
+        .map(|solution| {
+            let presses: u64 = solution.iter().map(Int::as_u64).map(|p| p.unwrap_or(0)).sum();
+            println!("Solution: {presses} {solution:?}");
+            presses
+        })//.take(1000)
+        .min()
+        .expect("Machine joltage should be solvable")
 }
 
 #[cfg(test)]
@@ -124,6 +153,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(33));
     }
 }
