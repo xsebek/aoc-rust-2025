@@ -1,28 +1,31 @@
-use std::collections::HashSet;
-use itertools::{iterate, Itertools};
+use advent_of_code::debug_println;
+use itertools::{Itertools, iterate};
+use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{char, newline, space1};
-use nom::{IResult, Parser};
-use nom::branch::alt;
 use nom::multi::{fold_many1, many1, separated_list1};
 use nom::sequence::{delimited, preceded, terminated};
+use nom::{IResult, Parser};
+use std::collections::HashSet;
 use z3::ast::Int;
 use z3::{Optimize, SatResult};
-use advent_of_code::debug_println;
 
 advent_of_code::solution!(10);
 
 pub fn part_one(input: &str) -> Option<usize> {
     let machines = parse(input);
-    Some(machines.iter()
-        .map(|m| {
-            let buttons = buttons_to_lights(&m.buttons);
-            button_presses(&buttons)
-                //.take(buttons.len() + 1)
-                .position(|l| l.contains(&m.lights))
-                .expect("button presses should eventually lead to light configuration")
-        })
-        .sum())
+    Some(
+        machines
+            .iter()
+            .map(|m| {
+                let buttons = buttons_to_lights(&m.buttons);
+                button_presses(&buttons)
+                    //.take(buttons.len() + 1)
+                    .position(|l| l.contains(&m.lights))
+                    .expect("button presses should eventually lead to light configuration")
+            })
+            .sum(),
+    )
 }
 
 struct Machine {
@@ -39,8 +42,16 @@ fn parse(input: &str) -> Vec<Machine> {
 }
 
 fn parse_machine(input: &str) -> IResult<&str, Machine> {
-    (parse_lights, preceded(space1, parse_wiring), preceded(space1, parse_joltage))
-        .map(|(lights, wiring, joltage)| Machine {lights, buttons: wiring, joltage})
+    (
+        parse_lights,
+        preceded(space1, parse_wiring),
+        preceded(space1, parse_joltage),
+    )
+        .map(|(lights, wiring, joltage)| Machine {
+            lights,
+            buttons: wiring,
+            joltage,
+        })
         .parse(input)
 }
 
@@ -50,10 +61,15 @@ fn parse_lights(input: &str) -> IResult<&str, u32> {
             alt((char('#'), char('.'))),
             || (0u8, 0),
             |(i, res), item: char| {
-                let l = match item { '#' => 1, _ => 0, };
+                let l = match item {
+                    '#' => 1,
+                    _ => 0,
+                };
                 (i + 1, res + (l << i))
-            }
-        ).map(|r| r.1).parse(i)
+            },
+        )
+        .map(|r| r.1)
+        .parse(i)
     }
     delimited(tag("["), l, tag("]")).parse(input)
 }
@@ -61,13 +77,22 @@ fn parse_lights(input: &str) -> IResult<&str, u32> {
 fn parse_wiring(input: &str) -> IResult<&str, Vec<Vec<usize>>> {
     separated_list1(
         space1,
-        delimited(char('('), separated_list1(char(','), nom::character::complete::usize), char(')'))
-    ).parse(input)
+        delimited(
+            char('('),
+            separated_list1(char(','), nom::character::complete::usize),
+            char(')'),
+        ),
+    )
+    .parse(input)
 }
 
 fn parse_joltage(input: &str) -> IResult<&str, Vec<u32>> {
-    delimited(char('{'), separated_list1(char(','), nom::character::complete::u32), char('}'))
-        .parse(input)
+    delimited(
+        char('{'),
+        separated_list1(char(','), nom::character::complete::u32),
+        char('}'),
+    )
+    .parse(input)
 }
 
 fn button_to_lights(button: &[usize]) -> u32 {
@@ -79,12 +104,13 @@ fn buttons_to_lights(buttons: &[Vec<usize>]) -> Vec<u32> {
 }
 
 fn press_buttons(buttons: &[u32], lights: &HashSet<u32>) -> HashSet<u32> {
-    lights.iter()
+    lights
+        .iter()
         .flat_map(|&l| buttons.iter().map(move |&b| l ^ b))
         .collect()
 }
 
-fn button_presses(buttons: &[u32]) -> impl Iterator<Item=HashSet<u32>> {
+fn button_presses(buttons: &[u32]) -> impl Iterator<Item = HashSet<u32>> {
     iterate(HashSet::from([0]), |l| press_buttons(buttons, l))
 }
 
@@ -95,12 +121,17 @@ pub fn part_two(input: &str) -> Option<u64> {
 
 fn solve_joltages(machine: &Machine) -> u64 {
     let optimizer = Optimize::new();
-    let buttons = machine.buttons.iter().map(|_| Int::fresh_const("b")).collect_vec();
+    let buttons = machine
+        .buttons
+        .iter()
+        .map(|_| Int::fresh_const("b"))
+        .collect_vec();
     for button in buttons.iter() {
         optimizer.assert(&button.ge(0));
     }
     for (j, required_jolts) in machine.joltage.iter().copied().enumerate() {
-        let sum = buttons.iter()
+        let sum = buttons
+            .iter()
             .zip(machine.buttons.iter())
             .filter(|(_button_presses, button_jolts)| button_jolts.contains(&j))
             .map(|(button_presses, _button_jolts)| button_presses)
@@ -116,13 +147,17 @@ fn solve_joltages(machine: &Machine) -> u64 {
             let model = optimizer.get_model();
             model.map(|m| {
                 let solution = buttons.iter().map(|b| m.get_const_interp(b)).collect_vec();
-                let presses: u64 = solution.iter().map(|b| b.as_ref().and_then(Int::as_u64).unwrap_or(0)).sum();
+                let presses: u64 = solution
+                    .iter()
+                    .map(|b| b.as_ref().and_then(Int::as_u64).unwrap_or(0))
+                    .sum();
                 debug_println!("Solution: {presses:?} {solution:?}");
                 presses
             })
-        },
+        }
         _ => None,
-    }.expect("Machine joltage should be solvable")
+    }
+    .expect("Machine joltage should be solvable")
 }
 
 #[cfg(test)]
@@ -134,16 +169,20 @@ mod tests {
         let (rest, lights) = parse_lights("[.##.]").expect("lights parse");
         assert_eq!(rest.len(), 0);
         assert_eq!(lights, 6);
-        let (rest, buttons) = parse_wiring("(3) (1,3) (2) (2,3) (0,2) (0,1)").expect("buttons parse");
+        let (rest, buttons) =
+            parse_wiring("(3) (1,3) (2) (2,3) (0,2) (0,1)").expect("buttons parse");
         assert_eq!(rest.len(), 0);
         assert_eq!(buttons[0], vec![3]);
-        assert_eq!(buttons[1], vec![1,3]);
+        assert_eq!(buttons[1], vec![1, 3]);
         let buttons = buttons_to_lights(&buttons);
         assert_eq!(buttons, vec![8, 10, 4, 12, 5, 3]);
         let expected = HashSet::from_iter(buttons.iter().copied());
         let lights_off = HashSet::from([0]);
         assert_eq!(press_buttons(&buttons, &lights_off), expected);
-        assert_eq!(button_presses(&buttons).position(|l| l.contains(&lights)), Some(2));
+        assert_eq!(
+            button_presses(&buttons).position(|l| l.contains(&lights)),
+            Some(2)
+        );
         // -- second example
         let (rest, lights) = parse_lights("[...#.]").expect("lights parse");
         assert_eq!(rest.len(), 0);
