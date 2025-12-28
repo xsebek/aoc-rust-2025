@@ -1,18 +1,16 @@
 use advent_of_code::debug_println;
 use itertools::Itertools;
 use petgraph::algo::{all_simple_paths, has_path_connecting};
-use petgraph::dot::Dot;
-use petgraph::graphmap::DiGraphMap;
 use petgraph::prelude::*;
-use petgraph::visit::{Reversed, Walker};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::RandomState;
+use petgraph::visit::{IntoNeighbors, Reversed, Walker};
 
 advent_of_code::solution!(11);
 
 pub fn part_one(input: &str) -> Option<usize> {
     let cables = parse(input);
-    debug_println!("Basic DOT format:\n{:?}\n", Dot::new(&cables));
+    debug_println!("Basic DOT format:\n{:?}\n", petgraph::dot::Dot::new(&cables));
     Some(all_simple_paths::<Vec<&str>, &CableMap, RandomState>(&cables, "you", "out", 1, None)
         .count())
 }
@@ -30,12 +28,12 @@ fn parse_line(line: &str) -> impl IntoIterator<Item=(&str, &str)> {
         .map(move |e| (n, e))
 }
 
-pub fn part_two(input: &str) -> Option<u64> {
+pub fn part_two(input: &str) -> Option<usize> {
     let cables = parse(input);
-    debug_println!("Basic DOT format:\n{:?}\n", Dot::new(&cables));
+    debug_println!("Basic DOT format:\n{:?}\n", petgraph::dot::Dot::new(&cables));
     let cables = filter_dac_fft_paths(cables);
-    debug_println!("Basic DOT format:\n{:?}\n", Dot::new(&cables));
-    None
+    debug_println!("Basic DOT format:\n{:?}\n", petgraph::dot::Dot::new(&cables));
+    Some(path_count(&cables))
 }
 
 fn filter_dac_fft_paths(mut cables: CableMap) -> CableMap {
@@ -48,15 +46,16 @@ fn filter_dac_fft_paths(mut cables: CableMap) -> CableMap {
     assert_ne!(has_path_connecting(&cables, "dac","fft", None),
                has_path_connecting(&cables, "fft","dac", None),
                "dac <-/-> fft");
+    debug_println!("check");
 
     if has_path_connecting(&cables, "dac", "fft", None) {
-        // svr --> dac --> fft --> out
+        debug_println!("svr --> dac --> fft --> out");
         filter_to_path(&mut cables, "svr", "dac");
         filter_to_path(&mut cables, "dac", "fft");
         filter_to_path(&mut cables, "fft", "out");
     }
     else {
-        // svr --> fft --> dac --> out
+        debug_println!("svr --> fft --> dac --> out");
         filter_to_path(&mut cables, "svr", "fft");
         filter_to_path(&mut cables, "fft", "dac");
         filter_to_path(&mut cables, "dac", "out");
@@ -85,13 +84,29 @@ fn path<'a>(cables: &CableMap<'a>, from_key: &'static str, to_key: &'static str)
     intersection(&from, &to)
 }
 
-// fn path_count(cables: &CableMap) -> usize {
-//     let result: HashMap<&str, usize> = HashMap::new();
-//     while !result.contains_key("out") {
-//         todo!()
-//     }
-//     result["out"]
-// }
+fn path_count(cables: &CableMap) -> usize {
+    debug_println!("path count");
+    let mut result: HashMap<&str, usize> = HashMap::from([("svr", 1)]);
+    let mut queue: VecDeque<&str> = VecDeque::from_iter(cables.neighbors("svr"));
+    let mut queue_s: HashSet<&str> = HashSet::from_iter(queue.iter().copied());
+    let mut i: usize = 0;
+    while let Some(node) = queue.pop_front() {
+        queue_s.remove(node);
+        i += 1;
+        if i > cables.node_count().pow(2) {
+            panic!("Cycle in graph!?")
+        }
+        let parents_sum = Reversed(cables)
+            .neighbors(node)
+            .flat_map(|p| result.get(p).copied())
+            .sum();
+        let original = result.insert(node, parents_sum);
+        if Some(parents_sum) != original {
+            queue.extend(cables.neighbors(node).filter(|n| !queue_s.contains(n)))
+        }
+    }
+    result["out"]
+}
 
 fn intersection<'a>(lhs: &HashSet<&'a str>, rhs: &HashSet<&'a str>) -> HashSet<&'a str> {
     lhs.intersection(rhs).copied().collect()
