@@ -17,7 +17,7 @@ pub fn part_one(input: &str) -> Option<usize> {
 
 type CableMap<'a> = DiGraphMap<&'a str, ()>;
 
-fn parse(input: &str) -> CableMap {
+fn parse(input: &'_ str) -> CableMap<'_> {
     CableMap::from_edges(input.lines().flat_map(parse_line))
 }
 
